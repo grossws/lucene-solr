@@ -21,6 +21,8 @@ import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Maintains a {@link IndexReader} {@link TermState} view over
@@ -33,18 +35,28 @@ import java.util.Arrays;
  */
 public final class TermContext {
 
+  private static final TermState EMPTY_TERMSTATE = new TermState() {
+    @Override
+    public void copyFrom(TermState other) {
+
+    }
+  };
+
   // Important: do NOT keep hard references to index readers
   private final Object topReaderContextIdentity;
   private final TermState[] states;
+  private final Term term;  // null if stats are to be used
   private int docFreq;
   private long totalTermFreq;
 
   //public static boolean DEBUG = BlockTreeTermsWriter.DEBUG;
 
   /**
-   * Creates an empty {@link TermContext} from a {@link IndexReaderContext}
+   * Creates an empty {@link TermContext} from a {@link IndexReaderContext}.  The
+   * {@link TermContext} will be lazily constructed and should not be used for
+   * term statistics
    */
-  public TermContext(IndexReaderContext context) {
+  public TermContext(Term term, IndexReaderContext context) {
     assert context != null && context.isTopLevel;
     topReaderContextIdentity = context.identity;
     docFreq = 0;
@@ -56,6 +68,14 @@ public final class TermContext {
       len = context.leaves().size();
     }
     states = new TermState[len];
+    this.term = term;
+  }
+
+  /**
+   * Creates an empty {@link TermContext} from a {@link IndexReaderContext}
+   */
+  public TermContext(IndexReaderContext context) {
+    this(null, context);
   }
 
   /**
@@ -72,7 +92,7 @@ public final class TermContext {
    * {@link IndexReader} pair.
    */
   public TermContext(IndexReaderContext context, TermState state, int ord, int docFreq, long totalTermFreq) {
-    this(context);
+    this(null, context);
     register(state, ord, docFreq, totalTermFreq);
   }
 
@@ -84,19 +104,15 @@ public final class TermContext {
    * <p>
    * Note: the given context must be a top-level context.
    */
-  public static TermContext build(IndexReaderContext context, Term term)
+  public static TermContext build(IndexReaderContext context, Term term, boolean needsStats)
       throws IOException {
     assert context != null && context.isTopLevel;
-    final String field = term.field();
-    final BytesRef bytes = term.bytes();
-    final TermContext perReaderTermState = new TermContext(context);
-    //if (DEBUG) System.out.println("prts.build term=" + term);
-    for (final LeafReaderContext ctx : context.leaves()) {
-      //if (DEBUG) System.out.println("  r=" + leaves[i].reader);
-      final Terms terms = ctx.reader().terms(field);
-      if (terms != null) {
-        final TermsEnum termsEnum = terms.iterator();
-        if (termsEnum.seekExact(bytes)) { 
+    final TermContext perReaderTermState = new TermContext(needsStats ? null : term, context);
+    if (needsStats) {
+      for (final LeafReaderContext ctx : context.leaves()) {
+        //if (DEBUG) System.out.println("  r=" + leaves[i].reader);
+        TermsEnum termsEnum = loadTermsEnum(ctx, term);
+        if (termsEnum != null) {
           final TermState termState = termsEnum.termState();
           //if (DEBUG) System.out.println("    found");
           perReaderTermState.register(termState, ctx.ord, termsEnum.docFreq(), termsEnum.totalTermFreq());
@@ -104,6 +120,17 @@ public final class TermContext {
       }
     }
     return perReaderTermState;
+  }
+
+  private static TermsEnum loadTermsEnum(LeafReaderContext ctx, Term term) throws IOException {
+    final Terms terms = ctx.reader().terms(term.field());
+    if (terms != null) {
+      final TermsEnum termsEnum = terms.iterator();
+      if (termsEnum.seekExact(term.bytes())) {
+        return termsEnum;
+      }
+    }
+    return null;
   }
 
   /**
@@ -149,17 +176,25 @@ public final class TermContext {
   }
 
   /**
-   * Returns the {@link TermState} for an leaf ordinal or <code>null</code> if no
-   * {@link TermState} for the ordinal was registered.
+   * Returns the {@link TermState} for a leaf reader context or <code>null</code> if no
+   * {@link TermState} for the context was registered.
    * 
-   * @param ord
-   *          the readers leaf ordinal to get the {@link TermState} for.
+   * @param ctx
+   *          the {@link LeafReaderContext} to get the {@link TermState} for.
    * @return the {@link TermState} for the given readers ord or <code>null</code> if no
    *         {@link TermState} for the reader was registered
    */
-  public TermState get(int ord) {
-    assert ord >= 0 && ord < states.length;
-    return states[ord];
+  public TermState get(LeafReaderContext ctx) throws IOException {
+    assert ctx.ord >= 0 && ctx.ord < states.length;
+    if (term == null)
+      return states[ctx.ord];
+    if (this.states[ctx.ord] == null) {
+      TermsEnum te = loadTermsEnum(ctx, term);
+      this.states[ctx.ord] = te == null ? EMPTY_TERMSTATE : te.termState();
+    }
+    if (this.states[ctx.ord] == EMPTY_TERMSTATE)
+      return null;
+    return this.states[ctx.ord];
   }
 
   /**
@@ -169,6 +204,8 @@ public final class TermContext {
    *         instances passed to {@link #register(TermState, int, int, long)}.
    */
   public int docFreq() {
+    if (term != null)
+      throw new IllegalStateException("Cannot call docFreq() on lazily constructed TermContext");
     return docFreq;
   }
   
@@ -179,6 +216,8 @@ public final class TermContext {
    *         instances passed to {@link #register(TermState, int, int, long)}.
    */
   public long totalTermFreq() {
+    if (term != null)
+      throw new IllegalStateException("Cannot call totalTermFreq() on lazily constructed TermContext");
     return totalTermFreq;
   }
 
@@ -194,4 +233,5 @@ public final class TermContext {
 
     return sb.toString();
   }
+
 }

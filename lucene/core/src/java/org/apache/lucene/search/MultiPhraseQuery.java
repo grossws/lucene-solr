@@ -217,7 +217,7 @@ public class MultiPhraseQuery extends Query {
           for (Term term: terms) {
             TermContext ts = termStates.get(term);
             if (ts == null) {
-              ts = TermContext.build(context, term);
+              ts = TermContext.build(context, term, needsScores);
               termStates.put(term, ts);
             }
             if (needsScores) {
@@ -265,7 +265,7 @@ public class MultiPhraseQuery extends Query {
           List<PostingsEnum> postings = new ArrayList<>();
 
           for (Term term : terms) {
-            TermState termState = termStates.get(term).get(context.ord);
+            TermState termState = termStates.get(term).get(context);
             if (termState != null) {
               termsEnum.seekExact(term.bytes(), termState);
               postings.add(termsEnum.postings(null, exposeOffsets ? PostingsEnum.ALL : PostingsEnum.POSITIONS));

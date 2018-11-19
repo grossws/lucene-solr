@@ -44,8 +44,8 @@ public final class SpanContainingQuery extends SpanContainQuery {
 
   @Override
   public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-    SpanWeight bigWeight = big.createWeight(searcher, false, boost);
-    SpanWeight littleWeight = little.createWeight(searcher, false, boost);
+    SpanWeight bigWeight = big.createWeight(searcher, needsScores, boost);
+    SpanWeight littleWeight = little.createWeight(searcher, needsScores, boost);
     return new SpanContainingWeight(searcher, needsScores ? getTermContexts(bigWeight, littleWeight) : null,
                                       bigWeight, littleWeight, boost);
   }

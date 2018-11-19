@@ -82,7 +82,7 @@ public final class IntervalQuery extends Query {
     TermStatistics[] termStats = new TermStatistics[terms.size()];
     int termUpTo = 0;
     for (Term term : terms) {
-      TermStatistics termStatistics = searcher.termStatistics(term, TermContext.build(searcher.getTopReaderContext(), term));
+      TermStatistics termStatistics = searcher.termStatistics(term, TermContext.build(searcher.getTopReaderContext(), term, needsScores));
       if (termStatistics != null) {
         termStats[termUpTo++] = termStatistics;
       }

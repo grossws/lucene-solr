@@ -124,30 +124,17 @@ public class TermQuery extends Query {
      * the term does not exist in the given context
      */
     private TermsEnum getTermsEnum(LeafReaderContext context) throws IOException {
-      if (termStates != null) {
-        // TermQuery either used as a Query or the term states have been provided at construction time
-        assert termStates.wasBuiltFor(ReaderUtil.getTopLevelContext(context)) : "The top-reader used to create Weight is not the same as the current reader's top-reader (" + ReaderUtil.getTopLevelContext(context);
-        final TermState state = termStates.get(context.ord);
-        if (state == null) { // term is not present in that reader
-          assert termNotInReader(context.reader(), term) : "no termstate found but term exists in reader term=" + term;
-          return null;
-        }
-        final TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
-        termsEnum.seekExact(term.bytes(), state);
-        return termsEnum;
-      } else {
-        // TermQuery used as a filter, so the term states have not been built up front
-        Terms terms = context.reader().terms(term.field());
-        if (terms == null) {
-          return null;
-        }
-        final TermsEnum termsEnum = terms.iterator();
-        if (termsEnum.seekExact(term.bytes())) {
-          return termsEnum;
-        } else {
-          return null;
-        }
+      assert termStates != null;
+      assert termStates.wasBuiltFor(ReaderUtil.getTopLevelContext(context)) :
+          "The top-reader used to create Weight is not the same as the current reader's top-reader (" + ReaderUtil.getTopLevelContext(context);
+      final TermState state = termStates.get(context);
+      if (state == null) { // term is not present in that reader
+        assert termNotInReader(context.reader(), term) : "no termstate found but term exists in reader term=" + term;
+        return null;
       }
+      final TermsEnum termsEnum = context.reader().terms(term.field()).iterator();
+      termsEnum.seekExact(term.bytes(), state);
+      return termsEnum;
     }
 
     private boolean termNotInReader(LeafReader reader, Term term) throws IOException {
@@ -205,15 +192,7 @@ public class TermQuery extends Query {
     final TermContext termState;
     if (perReaderTermState == null
         || perReaderTermState.wasBuiltFor(context) == false) {
-      if (needsScores) {
-        // make TermQuery single-pass if we don't have a PRTS or if the context
-        // differs!
-        termState = TermContext.build(context, term);
-      } else {
-        // do not compute the term state, this will help save seeks in the terms
-        // dict on segments that have a cache entry for this query
-        termState = null;
-      }
+      termState = TermContext.build(context, term, needsScores);
     } else {
       // PRTS was pre-build for this IS
       termState = this.perReaderTermState;

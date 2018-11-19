@@ -180,7 +180,7 @@ public class SpanNearQuery extends SpanQuery implements Cloneable {
   public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
     List<SpanWeight> subWeights = new ArrayList<>();
     for (SpanQuery q : clauses) {
-      subWeights.add(q.createWeight(searcher, false, boost));
+      subWeights.add(q.createWeight(searcher, needsScores, boost));
     }
     return new SpanNearWeight(subWeights, searcher, needsScores ? getTermContexts(subWeights) : null, boost);
   }

@@ -49,7 +49,7 @@ public class TestTermQuery extends LuceneTestCase {
         new TermQuery(new Term("foo", "baz")));
     QueryUtils.checkEqual(
         new TermQuery(new Term("foo", "bar")),
-        new TermQuery(new Term("foo", "bar"), TermContext.build(new MultiReader().getContext(), new Term("foo", "bar"))));
+        new TermQuery(new Term("foo", "bar"), TermContext.build(new MultiReader().getContext(), new Term("foo", "bar"), true)));
   }
 
   public void testCreateWeightDoesNotSeekIfScoresAreNotNeeded() throws IOException {
@@ -84,7 +84,7 @@ public class TestTermQuery extends LuceneTestCase {
     searcher.search(query, collector);
     assertEquals(1, collector.getTotalHits());
     TermQuery queryWithContext = new TermQuery(new Term("foo", "bar"),
-        TermContext.build(reader.getContext(), new Term("foo", "bar")));
+        TermContext.build(reader.getContext(), new Term("foo", "bar"), true));
     collector = new TotalHitCountCollector();
     searcher.search(queryWithContext, collector);
     assertEquals(1, collector.getTotalHits());
@@ -117,7 +117,7 @@ public class TestTermQuery extends LuceneTestCase {
     IndexSearcher noSeekSearcher = new IndexSearcher(noSeekReader);
     Query query = new TermQuery(new Term("foo", "bar"));
     TermQuery queryWithContext = new TermQuery(new Term("foo", "bar"),
-        TermContext.build(reader.getContext(), new Term("foo", "bar")));
+        TermContext.build(reader.getContext(), new Term("foo", "bar"), true));
     assertNotNull(queryWithContext.getTermContext());
     IOUtils.close(reader, w, dir);
   }
