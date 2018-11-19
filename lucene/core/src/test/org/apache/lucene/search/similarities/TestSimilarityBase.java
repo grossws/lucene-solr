@@ -626,7 +626,7 @@ public class TestSimilarityBase extends LuceneTestCase {
         IndexSearcher searcher = newSearcher(reader);
         searcher.setSimilarity(similarity);
         Term term = new Term("foo", "b");
-        TermContext context = TermContext.build(reader.getContext(), term);
+        TermContext context = TermContext.build(reader.getContext(), term, true);
         SimWeight simWeight = similarity.computeWeight(1f, searcher.collectionStatistics("foo"), searcher.termStatistics(term, context));
         SimilarityBase.BasicSimScorer simScorer = (SimilarityBase.BasicSimScorer) similarity.simScorer(simWeight, reader.leaves().get(0));
         float docLength = simScorer.getLengthValue(0);

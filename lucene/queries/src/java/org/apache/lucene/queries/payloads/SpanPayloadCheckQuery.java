@@ -63,7 +63,7 @@ public class SpanPayloadCheckQuery extends SpanQuery {
 
   @Override
   public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-    SpanWeight matchWeight = match.createWeight(searcher, false, boost);
+    SpanWeight matchWeight = match.createWeight(searcher, needsScores, boost);
     return new SpanPayloadCheckWeight(searcher, needsScores ? getTermContexts(matchWeight) : null, matchWeight, boost);
   }
 

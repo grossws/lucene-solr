@@ -330,7 +330,7 @@ public class TestMinShouldMatch2 extends LuceneTestCase {
         if (ord >= 0) {
           boolean success = ords.add(ord);
           assert success; // no dups
-          TermContext context = TermContext.build(reader.getContext(), term);
+          TermContext context = TermContext.build(reader.getContext(), term, true);
           SimWeight w = weight.similarity.computeWeight(1f,
                         searcher.collectionStatistics("field"),
                         searcher.termStatistics(term, context));

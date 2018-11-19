@@ -404,7 +404,7 @@ public class PhraseQuery extends Query {
         int termUpTo = 0;
         for (int i = 0; i < terms.length; i++) {
           final Term term = terms[i];
-          states[i] = TermContext.build(context, term);
+          states[i] = TermContext.build(context, term, needsScores);
           if (needsScores) {
             TermStatistics termStatistics = searcher.termStatistics(term, states[i]);
             if (termStatistics != null) {
@@ -440,7 +440,7 @@ public class PhraseQuery extends Query {
 
         for (int i = 0; i < terms.length; i++) {
           final Term t = terms[i];
-          final TermState state = states[i].get(context.ord);
+          final TermState state = states[i].get(context);
           if (state == null) { /* term doesnt exist in this segment */
             assert termNotInReader(reader, t): "no termstate found but term exists in reader";
             return null;

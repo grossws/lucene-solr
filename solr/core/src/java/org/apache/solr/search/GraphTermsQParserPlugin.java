@@ -285,10 +285,10 @@ public class GraphTermsQParserPlugin extends QParserPlugin {
           DocIdSetBuilder builder = new DocIdSetBuilder(reader.maxDoc(), terms);
           for (int i=0; i<finalContexts.size(); i++) {
             TermContext termContext = finalContexts.get(i);
-            TermState termState = termContext.get(context.ord);
+            TermState termState = termContext.get(context);
             if(termState != null) {
               Term term = finalTerms.get(i);
-              termsEnum.seekExact(term.bytes(), termContext.get(context.ord));
+              termsEnum.seekExact(term.bytes(), termContext.get(context));
               docs = termsEnum.postings(docs, PostingsEnum.NONE);
               builder.add(docs);
             }

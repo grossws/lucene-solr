@@ -136,7 +136,7 @@ public final class SynonymQuery extends Query {
       long totalTermFreq = 0;
       termContexts = new TermContext[terms.length];
       for (int i = 0; i < termContexts.length; i++) {
-        termContexts[i] = TermContext.build(searcher.getTopReaderContext(), terms[i]);
+        termContexts[i] = TermContext.build(searcher.getTopReaderContext(), terms[i], true);
         TermStatistics termStats = searcher.termStatistics(terms[i], termContexts[i]);
         docFreq = Math.max(termStats.docFreq(), docFreq);
         if (termStats.totalTermFreq() == -1) {
@@ -200,7 +200,7 @@ public final class SynonymQuery extends Query {
       // we use termscorers + disjunction as an impl detail
       List<Scorer> subScorers = new ArrayList<>();
       for (int i = 0; i < terms.length; i++) {
-        TermState state = termContexts[i].get(context.ord);
+        TermState state = termContexts[i].get(context);
         if (state != null) {
           TermsEnum termsEnum = context.reader().terms(terms[i].field()).iterator();
           termsEnum.seekExact(terms[i].bytes(), state);

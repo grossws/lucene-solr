@@ -538,7 +538,7 @@ public final class FeatureField extends Field {
    */
   static float computePivotFeatureValue(IndexReader reader, String featureField, String featureName) throws IOException {
     Term term = new Term(featureField, featureName);
-    TermContext context = TermContext.build(reader.getContext(), term);
+    TermContext context = TermContext.build(reader.getContext(), term, true);
     if (context.docFreq() == 0) {
       // avoid division by 0
       // The return value doesn't matter much here, the term doesn't exist,
