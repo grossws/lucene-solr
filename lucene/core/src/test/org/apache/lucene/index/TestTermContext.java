@@ -29,7 +29,7 @@ public class TestTermContext extends LuceneTestCase {
     RandomIndexWriter w = new RandomIndexWriter(random(), dir);
     w.addDocument(new Document());
     IndexReader r = w.getReader();
-    TermContext context = TermContext.build(r.getContext(), new Term("foo", "bar"));
+    TermContext context = TermContext.build(r.getContext(), new Term("foo", "bar"), true);
     assertEquals("TermContext\n  state=null\n", context.toString());
     IOUtils.close(r, w, dir);
   }

@@ -266,7 +266,7 @@ public final class BlendedTermQuery extends Query {
     final TermContext[] contexts = ArrayUtil.copyOfSubArray(this.contexts, 0, this.contexts.length);
     for (int i = 0; i < contexts.length; ++i) {
       if (contexts[i] == null || contexts[i].wasBuiltFor(reader.getContext()) == false) {
-        contexts[i] = TermContext.build(reader.getContext(), terms[i]);
+        contexts[i] = TermContext.build(reader.getContext(), terms[i], true);
       }
     }
 
@@ -299,7 +299,7 @@ public final class BlendedTermQuery extends Query {
   }
 
   private static TermContext adjustFrequencies(IndexReaderContext readerContext,
-      TermContext ctx, int artificialDf, long artificialTtf) {
+      TermContext ctx, int artificialDf, long artificialTtf) throws IOException {
     List<LeafReaderContext> leaves = readerContext.leaves();
     final int len;
     if (leaves == null) {
@@ -309,7 +309,7 @@ public final class BlendedTermQuery extends Query {
     }
     TermContext newCtx = new TermContext(readerContext);
     for (int i = 0; i < len; ++i) {
-      TermState termState = ctx.get(i);
+      TermState termState = ctx.get(leaves.get(i));
       if (termState == null) {
         continue;
       }

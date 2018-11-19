@@ -198,7 +198,7 @@ public class TermAutomatonQuery extends Query {
 
     for (Map.Entry<BytesRef,Integer> ent : termToID.entrySet()) {
       if (ent.getKey() != null) {
-        termStates.put(ent.getValue(), TermContext.build(context, new Term(field, ent.getKey())));
+        termStates.put(ent.getValue(), TermContext.build(context, new Term(field, ent.getKey()), needsScores));
       }
     }
 
@@ -380,7 +380,7 @@ public class TermAutomatonQuery extends Query {
         TermContext termContext = ent.getValue();
         assert termContext.wasBuiltFor(ReaderUtil.getTopLevelContext(context)) : "The top-reader used to create Weight is not the same as the current reader's top-reader (" + ReaderUtil.getTopLevelContext(context);
         BytesRef term = idToTerm.get(ent.getKey());
-        TermState state = termContext.get(context.ord);
+        TermState state = termContext.get(context);
         if (state != null) {
           TermsEnum termsEnum = context.reader().terms(field).iterator();
           termsEnum.seekExact(term, state);

@@ -161,7 +161,7 @@ public class ExactStatsCache extends StatsCache {
       HashMap<String,TermStats> statsMap = new HashMap<>();
       HashMap<String,CollectionStats> colMap = new HashMap<>();
       for (Term t : terms) {
-        TermContext termContext = TermContext.build(context, t);
+        TermContext termContext = TermContext.build(context, t, true);
 
         if (!colMap.containsKey(t.field())) { // collection stats for this field
           colMap.put(t.field(), new CollectionStats(searcher.localCollectionStatistics(t.field())));
